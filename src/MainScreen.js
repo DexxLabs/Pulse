@@ -17,7 +17,6 @@ import DeviceInfo from 'react-native-device-info';
 import NetInfo from '@react-native-community/netinfo';
 import fonts from '../assets/data/fonts';
 
-// Import native module
 const { SystemResourceMonitor } = NativeModules;
 const resourceEmitter = new NativeEventEmitter(SystemResourceMonitor);
 
@@ -82,26 +81,21 @@ const ResourceMonitorApp = () => {
   const [isMonitoring, setIsMonitoring] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Initialize real-time monitoring
   useEffect(() => {
-    // Get initial device info
     getDeviceInfo();
     
-    // Start monitoring if native module exists
     if (SystemResourceMonitor) {
       SystemResourceMonitor.startMonitoring();
       
-      // Listen for CPU updates
 const cpuSubscription = resourceEmitter.addListener(
   'onCPUUpdate',
   (data) => {
-    console.log('CPU Update received:', data); // ADD THIS LINE
+    console.log('CPU Update received:', data);
     setCpuUsage(data.usage);
     setLastUpdate(new Date());
   }
 );
       
-      // Listen for Memory updates
       const memorySubscription = resourceEmitter.addListener(
         'onMemoryUpdate',
         (data) => {
@@ -112,7 +106,6 @@ const cpuSubscription = resourceEmitter.addListener(
         }
       );
       
-      // Listen for Battery updates
       const batterySubscription = resourceEmitter.addListener(
         'onBatteryUpdate',
         (data) => {
@@ -134,7 +127,6 @@ const cpuSubscription = resourceEmitter.addListener(
         }
       );
       
-      // Listen for Storage updates
       const storageSubscription = resourceEmitter.addListener(
         'onStorageUpdate',
         (data) => {
@@ -145,14 +137,14 @@ const cpuSubscription = resourceEmitter.addListener(
         }
       );
       
-      // Listen for Network updates
+      
       const networkSubscription = resourceEmitter.addListener(
         'onNetworkUpdate',
         (data) => {
           setNetworkType(data.type);
           setDownloadSpeed(data.downloadSpeed);
           setUploadSpeed(data.uploadSpeed);
-          setNetworkSpeed(data.downloadSpeed); // Display download speed
+          setNetworkSpeed(data.downloadSpeed); 
           setLastUpdate(new Date());
         }
       );
@@ -166,7 +158,6 @@ const cpuSubscription = resourceEmitter.addListener(
         networkSubscription.remove();
       };
     } else {
-      // Fallback to device-info if native module not available
       console.warn('SystemResourceMonitor native module not found. Using fallback.');
       getFallbackData();
       const interval = setInterval(getFallbackData, 3000);
@@ -174,7 +165,6 @@ const cpuSubscription = resourceEmitter.addListener(
     }
   }, []);
 
-  // App state monitoring
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
@@ -193,30 +183,25 @@ const cpuSubscription = resourceEmitter.addListener(
     return () => subscription.remove();
   }, []);
 
-  // Fallback data using react-native-device-info
   const getFallbackData = async () => {
     try {
-      // Memory
       const usedMemory = await DeviceInfo.getUsedMemory();
       const totalMemory = await DeviceInfo.getTotalMemory();
       setMemoryUsage((usedMemory / totalMemory) * 100);
       setMemoryUsedGB((usedMemory / (1024 * 1024 * 1024)).toFixed(1));
       setMemoryTotalGB((totalMemory / (1024 * 1024 * 1024)).toFixed(1));
 
-      // Battery
       const battery = await DeviceInfo.getBatteryLevel();
       const charging = await DeviceInfo.isBatteryCharging();
       setBatteryLevel(battery * 100);
       setIsCharging(charging);
 
-      // Storage
       const freeDisk = await DeviceInfo.getFreeDiskStorage();
       const totalDisk = await DeviceInfo.getTotalDiskCapacity();
       setStorageUsed(((totalDisk - freeDisk) / (1024 * 1024 * 1024)).toFixed(0));
       setStorageTotal((totalDisk / (1024 * 1024 * 1024)).toFixed(0));
       setStorageFree((freeDisk / (1024 * 1024 * 1024)).toFixed(0));
 
-      // Network
       const netState = await NetInfo.fetch();
       setNetworkType(netState.type);
       
